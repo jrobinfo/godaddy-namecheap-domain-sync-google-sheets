@@ -5,7 +5,7 @@
     "scripts": { "start": "node index.js" },
     "dependencies": {
       "express": "^4.19.2",
-      "node-fetch": "^3.4.4",
+      "node-fetch": "^3.3.2",
       "helmet": "^7.0.0",
       "basic-auth": "^2.0.1"
     }
