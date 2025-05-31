@@ -1,16 +1,16 @@
 /***** CONFIG *****************************************************************/
-const LIMITS   = { NS:5, A:5, AAAA:5, CNAME:5, MX:5, TXT:5 };
-const CORE_COL = [
-  'Domain','TLD','Created','OwnershipDate','Expires','AutoRenew','Status','Privacy',
-  'Registrant First','Registrant Last','Registrant Email'
-];
-const CACHE_TTL   = 24 * 3600;        // seconds
-const CALL_PAUSE  = 1500;             // 40 calls/min  (< Namecheap 50 cap)
+// const LIMITS   = { NS:5, A:5, AAAA:5, CNAME:5, MX:5, TXT:5 }; // Moved to Config.gs
+// const CORE_COL = [ // Moved to Config.gs as CORE_COL_NC
+//  'Domain','TLD','Created','OwnershipDate','Expires','AutoRenew','Status','Privacy',
+//  'Registrant First','Registrant Last','Registrant Email'
+// ];
+// const CACHE_TTL   = 24 * 3600;        // seconds // Moved to Config.gs
+// const CALL_PAUSE  = 1500;             // 40 calls/min  (< Namecheap 50 cap) // Moved to Config.gs
 /******************************************************************************/
 
 /* ------------- dynamic header ----------- */
-function headerRow(){
-  const hdr=[...CORE_COL];
+function headerRow(){ // Renamed from headerRow to headerRowNc to avoid conflict if godaddy.gs has a similar function
+  const hdr=[...CORE_COL_NC];
   for (const t in LIMITS) for (let i=1;i<=LIMITS[t];i++) hdr.push(`${t}${i}`);
   return hdr;
 }
@@ -29,7 +29,7 @@ function syncNamecheapSheet(){
   const ss       = SpreadsheetApp.getActiveSpreadsheet();
   const main     = sheet(ss,'NamecheapDomains');
   const miss     = sheet(ss,'Missing-Data (NC)');
-  main.clear(); main.appendRow(headerRow());
+  main.clear(); main.appendRow(headerRowNc());
 
   /* 1️⃣  grab domain list */
   const listXML  = ncCall(PROXY,{ApiUser:NCU,ApiKey:NCK,UserName:NCU,ClientIp:IP,
