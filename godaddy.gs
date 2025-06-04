@@ -52,7 +52,7 @@ function syncGoDaddySheet(){
 
     /* full DNS snapshot (cached) */
     const dns=getCached(cache,'dns_',d.domain,
-      ()=>buildDNS(d.domain,key,sec,ns.length));
+      ()=>buildDNSForGoDaddy(d.domain,key,sec,ns.length));
 
     /* ---------- flatten to row ---------- */
     const reg=det.contactRegistrant||{},
@@ -106,7 +106,7 @@ function dohQuery(dom,t){
   const body=JSON.parse(res.getContentText()),ans=Array.isArray(body.Answer)?body.Answer:[];
   return ans.map(a=>(a.data||'').replace(/\.$/,''));
 }
-function buildDNS(dom,k,s,hasGD){
+function buildDNSForGoDaddy(dom,k,s,hasGD){
   const map={},types=Object.keys(LIMITS);types.forEach(t=>map[t]=[]);
   types.forEach(t=>{
     let arr=hasGD?safeFetch(`${API_BASE_GD}/domains/${dom}/records/${t}`,k,s):[];
@@ -125,3 +125,14 @@ function fetchJSON(u,k,s){
 }
 function ensureSheet(ss,n){return ss.getSheetByName(n)||ss.insertSheet(n);}
 function csv(v){return Array.isArray(v)?v.join(','):v||'';}
+
+/* ---------- main entry point ---------- */
+function main() {
+  try {
+    syncGoDaddySheet();
+    console.log('GoDaddy sync completed successfully');
+  } catch (error) {
+    console.error('Error during GoDaddy sync:', error.toString());
+    throw error;
+  }
+}
