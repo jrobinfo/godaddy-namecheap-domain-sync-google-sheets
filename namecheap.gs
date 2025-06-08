@@ -327,14 +327,20 @@ function getDomainContacts(cache, name, PROXY, NCU, NCK, IP, PUSER, PPASS) {
 }
 
 /* ======== DNS array builder =========================================== */
-function buildDNS(nsArr,hosts){
-  const map={NS:nsArr.slice(0),A:[],AAAA:[],CNAME:[],MX:[],TXT:[]};
-  hosts.forEach(h=>{
+function buildDNS(nsArr, hosts) {
+  const map = { NS: nsArr.slice(0), A: [], AAAA: [], CNAME: [], MX: [], TXT: [] };
+
+  for (var i = 0; i < (hosts ? hosts.length : 0); i++) {
+    const h = hosts[i];
     const t = h.getAttribute('Type').getValue();
     const d = h.getAttribute('Address').getValue();
-    if(t==='MX') map.MX.push(h.getAttribute('MXPref').getValue()+' '+d);
-    else if(map[t]) map[t].push(d);
-  });
+    if (t === 'MX') {
+      map.MX.push(h.getAttribute('MXPref').getValue() + ' ' + d);
+    } else if (map[t]) {
+      map[t].push(d);
+    }
+  }
+
   return map;
 }
 
@@ -370,37 +376,35 @@ function dohQuery(domain, recordType) {
 
 /* ======== Enhanced DNS builder with DoH fallback ====================== */
 function buildDNSWithFallback(domain, nsArr, hosts) {
-  const map = {NS: nsArr.slice(0), A:[], AAAA:[], CNAME:[], MX:[], TXT:[]};
-  
+  const map = { NS: nsArr.slice(0), A: [], AAAA: [], CNAME: [], MX: [], TXT: [] };
+
   // First, process hosts from Namecheap API
-  hosts.forEach((h, idx) => {
+  for (var i = 0; i < (hosts ? hosts.length : 0); i++) {
+    const h = hosts[i];
     try {
-      // Log available attributes for debugging
-      if (idx === 0) {
+      if (i === 0) {
         const attrs = h.getAttributes();
         Logger.log(`Host element attributes: ${attrs.map(a => a.getName()).join(', ')}`);
       }
-      
-      // Namecheap might use different attribute names
+
       const type = attr(h, 'Type') || attr(h, 'RecordType') || '';
       const address = attr(h, 'Address') || attr(h, 'Value') || attr(h, 'Data') || '';
       const mxPref = attr(h, 'MXPref') || attr(h, 'Priority') || '10';
       const hostName = attr(h, 'Name') || attr(h, 'HostName') || '';
-      
+
       Logger.log(`Host record: Type=${type}, Address=${address}, Name=${hostName}`);
-      
+
       if (type === 'MX' && address) {
         map.MX.push(`${mxPref} ${address}`);
       } else if (type === 'CNAME' && address) {
-        // CNAME records might need special handling
         map.CNAME.push(address);
       } else if (type && map[type] && address) {
         map[type].push(address);
       }
-    } catch(e) {
+    } catch (e) {
       Logger.log(`Error processing host record: ${e.toString()}`);
     }
-  });
+  }
   
   // If no nameservers from API, query via DoH
   if (!map.NS.length) {
