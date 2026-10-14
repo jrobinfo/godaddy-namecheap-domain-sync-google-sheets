@@ -1,0 +1,26 @@
+name: Deploy Apps Script
+on:
+  push:
+    branches: [main]
+    paths: ['*.gs', 'appsscript.json', '.clasp.json', '.github/workflows/clasp-push.yml']
+  workflow_dispatch:
+concurrency: { group: clasp-push, cancel-in-progress: false }
+jobs:
+  push:
+    runs-on: ubuntu-latest
+    permissions: { contents: read }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 20 }
+      - run: npm install -g @google/clasp@3
+      - name: Write clasp credentials
+        env: { CLASPRC_JSON: '${{ secrets.CLASPRC_JSON }}' }
+        run: |
+          test -n "$CLASPRC_JSON" || { echo "CLASPRC_JSON secret missing"; exit 1; }
+          printf '%s' "$CLASPRC_JSON" > ~/.clasprc.json
+          chmod 600 ~/.clasprc.json
+      - name: Push (replaces all project files with this repo's .gs + manifest)
+        run: clasp push --force
+      - run: rm -f ~/.clasprc.json
+        if: always()
